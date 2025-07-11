@@ -7,37 +7,73 @@ import jsPDF from 'jspdf';
 // @ts-ignore
 import html2canvas from 'html2canvas';
 
-const Result = () => {
+interface StudentData {
+  age: number;
+  branch: string;
+  gpa: number;
+  attendance: number;
+  backlogs: number;
+  internshipDone: string;
+  skills: string[];
+}
+
+interface PredictionResult {
+  placementChance: number;
+  roadmap: string[];
+  studentData: StudentData;
+}
+
+const Result: React.FC = () => {
   const navigate = useNavigate();
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState<PredictionResult | null>(null);
   const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
-    const stored = sessionStorage.getItem('predictionResult');
+    const storedResultString = sessionStorage.getItem('predictionResult');
+    if (!storedResultString) {
+      navigate('/form');
+      return;
+    }
   
-    if (stored) {
-      const result = JSON.parse(stored);
-      setResult(result);
-    } else {
+    try {
+      const stored = JSON.parse(storedResultString);
+  
+      // Convert roadmap string into array
+      const roadmapRaw = stored.roadmap?.roadmap || stored.roadmap || '';
+      console.log("roadmapRaw:", roadmapRaw);
+      const skills = Array.isArray(stored.studentData.skills)
+        ? stored.studentData.skills
+        : stored.studentData.skills?.split(',').map((s: string) => s.trim()) || [];
+      console.log("roadmapArray:", roadmapArray);
+      setResult({
+        placementChance: stored.placementChance || stored.placement_chance,
+        roadmap: roadmapArray,
+        studentData: {
+          ...stored.studentData,
+          skills,
+        },
+      });
+    } catch (err) {
+      console.error('Failed to parse predictionResult:', err);
       navigate('/form');
     }
   }, [navigate]);
+  
+  
   
 
   const generatePDF = async () => {
     setGenerating(true);
     try {
       const element = document.getElementById('result-content');
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        logging: false,
-      });
-      
+      if (!element) return;
+      const canvas = await html2canvas(element, { scale: 2, logging: false });
+
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
+
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save('placement-prediction-report.pdf');
     } catch (error) {
@@ -48,21 +84,22 @@ const Result = () => {
   };
 
   const shareResult = async () => {
+    if (!result) return;
+
+    const message = `I got a ${result.placementChance.toFixed(1)}% placement probability with PlacementAI!`;
+
     if (navigator.share) {
       try {
         await navigator.share({
           title: 'My Placement Prediction',
-          text: `I got a ${result?.prediction.toFixed(1)}% placement probability with PlacementAI!`,
+          text: message,
           url: window.location.href,
         });
       } catch (error) {
         console.error('Error sharing:', error);
       }
     } else {
-      // Fallback: copy to clipboard
-      navigator.clipboard.writeText(
-        `I got a ${result?.prediction.toFixed(1)}% placement probability with PlacementAI! Check it out at ${window.location.origin}`
-      );
+      navigator.clipboard.writeText(`${message} Check it out at ${window.location.origin}`);
       alert('Link copied to clipboard!');
     }
   };
@@ -74,6 +111,8 @@ const Result = () => {
       </div>
     );
   }
+
+  const { placementChance, roadmap, studentData } = result;
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
@@ -87,7 +126,7 @@ const Result = () => {
             Based on your academic profile and current market trends
           </p>
         </div>
-        
+
         <div className="flex space-x-3">
           <button
             onClick={() => navigate('/form')}
@@ -96,7 +135,7 @@ const Result = () => {
             <ArrowLeft className="h-4 w-4" />
             <span>Back to Form</span>
           </button>
-          
+
           <button
             onClick={shareResult}
             className="flex items-center space-x-2 px-4 py-2 border border-primary-300 text-primary-600 dark:text-primary-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors duration-200"
@@ -104,7 +143,7 @@ const Result = () => {
             <Share2 className="h-4 w-4" />
             <span>Share</span>
           </button>
-          
+
           <button
             onClick={generatePDF}
             disabled={generating}
@@ -122,45 +161,26 @@ const Result = () => {
           Student Profile Summary
         </h2>
         <div className="grid md:grid-cols-3 gap-4 text-sm">
-          <div>
-            <span className="text-gray-500 dark:text-gray-400">Age:</span>
-            <span className="ml-2 font-medium text-gray-900 dark:text-white">{result.studentData.age}</span>
-          </div>
-          <div>
-            <span className="text-gray-500 dark:text-gray-400">Branch:</span>
-            <span className="ml-2 font-medium text-gray-900 dark:text-white">{result.studentData.branch}</span>
-          </div>
-          <div>
-            <span className="text-gray-500 dark:text-gray-400">GPA:</span>
-            <span className="ml-2 font-medium text-gray-900 dark:text-white">{result.studentData.gpa}</span>
-          </div>
-          <div>
-            <span className="text-gray-500 dark:text-gray-400">Attendance:</span>
-            <span className="ml-2 font-medium text-gray-900 dark:text-white">{result.studentData.attendance}%</span>
-          </div>
-          <div>
-            <span className="text-gray-500 dark:text-gray-400">Backlogs:</span>
-            <span className="ml-2 font-medium text-gray-900 dark:text-white">{result.studentData.backlogs}</span>
-          </div>
-          <div>
-            <span className="text-gray-500 dark:text-gray-400">Internship:</span>
-            <span className="ml-2 font-medium text-gray-900 dark:text-white">{result.studentData.internshipDone}</span>
-          </div>
+          <div><span className="text-gray-500 dark:text-gray-400">Age:</span> <span className="ml-2 font-medium text-gray-900 dark:text-white">{studentData.age}</span></div>
+          <div><span className="text-gray-500 dark:text-gray-400">Branch:</span> <span className="ml-2 font-medium text-gray-900 dark:text-white">{studentData.branch}</span></div>
+          <div><span className="text-gray-500 dark:text-gray-400">GPA:</span> <span className="ml-2 font-medium text-gray-900 dark:text-white">{studentData.gpa}</span></div>
+          <div><span className="text-gray-500 dark:text-gray-400">Attendance:</span> <span className="ml-2 font-medium text-gray-900 dark:text-white">{studentData.attendance}%</span></div>
+          <div><span className="text-gray-500 dark:text-gray-400">Backlogs:</span> <span className="ml-2 font-medium text-gray-900 dark:text-white">{studentData.backlogs}</span></div>
+          <div><span className="text-gray-500 dark:text-gray-400">Internship:</span> <span className="ml-2 font-medium text-gray-900 dark:text-white">{studentData.internshipDone}</span></div>
         </div>
         <div className="mt-4">
           <span className="text-gray-500 dark:text-gray-400">Skills:</span>
-          <span className="ml-2 font-medium text-gray-900 dark:text-white">{result.studentData.skills}</span>
+          <span className="ml-2 font-medium text-gray-900 dark:text-white">{studentData.skills.join(', ')}</span>
         </div>
       </div>
 
       {/* AI Analysis */}
       <div id="result-content">
-        console.log('AI Analysis Result:', result);
         <AIOutputCard
-          prediction={result.prediction}
-          roadmap={result.roadmap}
-          skills={result.skills}
-          recommendations={result.recommendations}
+          prediction={placementChance}
+          roadmap={roadmap}
+          skills={studentData.skills}
+          recommendations={roadmap}
         />
       </div>
 

@@ -1,25 +1,18 @@
-
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Brain, Lightbulb, Target, CheckCircle, ArrowRight } from 'lucide-react';
 
 interface AIOutputCardProps {
   prediction?: number;
-  roadmap?: string[];
+  roadmap?: string;
   skills?: string[];
   recommendations?: string[];
-  className?: string;
 }
-
-useEffect(() => {
-  console.log("Received AIOutputCard props", { prediction, roadmap, skills, recommendations });
-}, []);
 
 const AIOutputCard: React.FC<AIOutputCardProps> = ({
   prediction,
-  roadmap = [],
+  roadmap,
   skills = [],
   recommendations = [],
-  className = '',
 }) => {
   const getPredictionColor = (percentage: number) => {
     if (percentage >= 80) return 'text-green-600 dark:text-green-400';
@@ -34,7 +27,7 @@ const AIOutputCard: React.FC<AIOutputCardProps> = ({
   };
 
   return (
-    <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden ${className}`}>
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-6 text-white">
         <div className="flex items-center space-x-3">

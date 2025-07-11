@@ -88,11 +88,13 @@ const Form = () => {
       const roadmap = await generateRoadmap(formData, prediction.placement_chance);
       console.log('Prediction:', prediction);
       console.log('Roadmap:', roadmap);
+      const roadmapSteps = roadmap.roadmap.split('\n').filter(line => line.trim() !== '');
       sessionStorage.setItem('predictionResult', JSON.stringify({
         placementChance: prediction.placement_chance,
-        roadmap: roadmap.roadmap,
+        roadmap: roadmapSteps,
         studentData: formData,
       }));
+      
 
       
       // Store result in sessionStorage and navigate to result page
