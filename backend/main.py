@@ -1,10 +1,18 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import joblib
+from fastapi.middleware.cors import CORSMiddleware
 from utils import compute_skill_score
 from gemini import generate_roadmap
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Change to your frontend URL in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class StudentData(BaseModel):
     gender: str
@@ -20,10 +28,10 @@ class StudentData(BaseModel):
 def predict(data: StudentData):
     # Load model and encoders
     model = joblib.load(r"C:\Users\HP\Desktop\3rd year projects\Placement-assistant\models\placement_predictor.pkl")
-    gender_encoder = joblib.load(r"")
-    branch_encoder = joblib.load("models/branch_encoder.pkl")
-    clubs_encoder = joblib.load("models/clubs_encoder.pkl")
-    internship_encoder = joblib.load("models/internship_encoder.pkl")
+    gender_encoder = joblib.load(r"C:\Users\HP\Desktop\3rd year projects\Placement-assistant\models\gender_encoder.pkl")
+    branch_encoder = joblib.load(r"C:\Users\HP\Desktop\3rd year projects\Placement-assistant\models\branch_encoder.pkl")
+    clubs_encoder = joblib.load(r"C:\Users\HP\Desktop\3rd year projects\Placement-assistant\models\clubs_encoder.pkl")
+    internship_encoder = joblib.load(r"C:\Users\HP\Desktop\3rd year projects\Placement-assistant\models\internship_done_encoder.pkl")
 
     # Compute skill score
     skill_score = compute_skill_score(', '.join(data.Skills))
