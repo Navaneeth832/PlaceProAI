@@ -1,7 +1,6 @@
 import google.generativeai as genai
 import os
 api_key = os.getenv("GOOGLE_API_KEY")
-print(api_key)
 genai.configure(api_key=api_key)
 model=genai.GenerativeModel("gemini-2.0-flash")
 def generate_roadmap(data,chance):
