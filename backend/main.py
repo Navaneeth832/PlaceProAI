@@ -39,12 +39,14 @@ def predict(data: StudentData):
     # Encode categorical fields properly
     gender = gender_encoder.transform([data.gender])[0]
     branch = branch_encoder.transform([data.branch])[0]
-    internship = internship_encoder.transform([str(data.internshipDone)])[0]
+    #internship = internship_encoder.transform([str(data.internshipDone)])[0]
+    internship = internship_encoder.transform(["Yes" if data.internshipDone else "No"])[0]
     clubs = clubs_encoder.transform([data.Clubs[0]])[0] if data.Clubs else 0
 
     # Predict placement
     features = [[gender, branch, data.gpa, data.backlogs, data.attendance, skill_score, internship, clubs]]
-    placement_chance = model.predict(features)[0]
+    placement_chance = model.predict(features)
+    placement_chance = placement_chance[0]
 
     # Generate roadmap
     roadmap = generate_roadmap(data, placement_chance)
