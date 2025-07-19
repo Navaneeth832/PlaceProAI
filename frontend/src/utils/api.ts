@@ -1,65 +1,39 @@
-const BASE_URL = "http://127.0.0.1:8000/api"; // Change when deployed
+import axios from "axios";
 
-interface FormData {
-  age: string;
+const API_BASE_URL = "http://localhost:8000"; // Update if backend is hosted elsewhere
+
+export interface StudentData {
   gender: string;
   branch: string;
-  gpa: string;
-  attendance: string;
-  backlogs: string;
-  skills: string;
-  internshipDone: string;
-  clubs?: string;
+  gpa: number;
+  backlogs: number;
+  attendance: number;
+  internshipDone: boolean;
+  Skills: string[];
+  Clubs: string[];
 }
 
-export async function predictPlacement(formData: unknown) {
-  const requestBody = {
-    age: parseInt(formData.age),
-    gender: formData.gender === 'Male' ? 1 : formData.gender === 'Female' ? 0 : 2,
-    branch: ["CSE", "ECE", "EEE", "MECH", "CIVIL", "IT", "Other"].indexOf(formData.branch),
-    gpa: parseFloat(formData.gpa),
-    attendance: parseFloat(formData.attendance),
-    backlogs: parseInt(formData.backlogs),
-    skill_score: calculateSkillScore(formData.skills),
-    internship: formData.internshipDone === "Yes" ? 1 : 0,
-    clubs: formData.clubs?.trim() ? 1 : 0,
-  };
-
-  const res = await fetch(`${BASE_URL}/predict/`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(requestBody),
-  });
-
-  return res.json();
-}
-
-export async function generateRoadmap(formData: unknown, chance: number) {
-  const res = await fetch(`${BASE_URL}/ai-summary/`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chance: chance,
-      gpa: formData.gpa,
-      backlogs: formData.backlogs,
-      skills: formData.skills,
-      internship: formData.internshipDone,
-      attendance: formData.attendance,
-    }),
-  });
-
-  return res.json();
-}
-
-function calculateSkillScore(skills: string): number {
-  const skillList = skills.split(",").map(s => s.trim().toLowerCase());
-  const highValueSkills = ["python", "machine learning", "react", "django", "sql", "data analysis"];
-  let score = 0;
-
-  for (let skill of skillList) {
-    if (highValueSkills.includes(skill)) score += 1.5;
-    else if (skill.length > 0) score += 0.8;
+// Predict placement chance from backend
+export const predictPlacement = async (data: StudentData): Promise<number> => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/predict`, data);
+    return response.data.chance; // Expected: { chance: float }
+  } catch (error) {
+    console.error("Prediction error:", error);
+    throw new Error("Prediction failed.");
   }
+};
 
-  return Math.round(score * 10) / 10; // rounded score
-}
+// Generate roadmap using Gemini or similar service
+export const generateRoadmap = async (chance: number, data: StudentData): Promise<string> => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/roadmap`, {
+      chance,
+      data
+    });
+    return response.data.roadmap; // Expected: { roadmap: string }
+  } catch (error) {
+    console.error("Roadmap generation error:", error);
+    throw new Error("Failed to generate roadmap.");
+  }
+};

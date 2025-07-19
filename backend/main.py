@@ -45,8 +45,8 @@ def predict(data: StudentData):
 
     # Predict placement
     features = [[gender, branch, data.gpa, data.backlogs, data.attendance, skill_score, internship, clubs]]
-    placement_chance = model.predict(features)
-    placement_chance = int(placement_chance[0])
+    placement_chance = model.predict_proba(features)
+    placement_chance = placement_chance[0]*100
 
     # Generate roadmap
     roadmap = generate_roadmap(data, placement_chance)

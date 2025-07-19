@@ -7,7 +7,7 @@ import { predictPlacement, generateRoadmap } from '../utils/api';
 const Form = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const [formData, setFormData] = useState({
     age: '',
@@ -31,7 +31,7 @@ const Form = () => {
       ...prev,
       [name]: value
     }));
-    // Clear error when user starts typing
+
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -41,7 +41,7 @@ const Form = () => {
   };
 
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors: { [key: string]: string } = {};
 
     if (!formData.age || formData.age < 18 || formData.age > 30) {
       newErrors.age = 'Age must be between 18 and 30';
@@ -74,38 +74,29 @@ const Form = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setLoading(true);
-    
+
     try {
-      // For demo purposes, using mock data
-      // In production, use: const result = await predictPlacement(formData);
       const prediction = await predictPlacement(formData);
       const roadmap = await generateRoadmap(formData, prediction.placement_chance);
-      console.log('Prediction:', prediction);
-      console.log('Roadmap:', roadmap);
-      const roadmapSteps = roadmap.roadmap.split('\n').filter(line => line.trim() !== '');
-      sessionStorage.setItem('predictionResult', JSON.stringify({
+
+      const roadmapSteps = roadmap.roadmap
+        ? roadmap.roadmap.split('\n').filter(line => line.trim() !== '')
+        : [];
+
+      const resultData = {
         placementChance: prediction.placement_chance,
         roadmap: roadmapSteps,
         studentData: formData,
-      }));
-      
+      };
 
-      
-      // Store result in sessionStorage and navigate to result page
-      sessionStorage.setItem('predictionResult', JSON.stringify({
-        ...prediction,
-        studentData: formData
-      }));
+      sessionStorage.setItem('predictionResult', JSON.stringify(resultData));
       navigate('/result');
     } catch (error) {
-      console.error('Error submitting form:', error);
-      // Handle error - show toast or error message
+      console.error('Submission error:', error);
+      // You may add a toast or alert here for UX
     } finally {
       setLoading(false);
     }
