@@ -15,13 +15,14 @@ app.add_middleware(
 )
 
 class StudentData(BaseModel):
+    age: int
     gender: str
     branch: str
     gpa: float
     backlogs: int
     attendance: float
-    internshipDone: bool
     Skills: list[str]
+    internshipDone: bool
     Clubs: list[str]
 
 @app.post("/predict")
