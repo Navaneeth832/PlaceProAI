@@ -47,7 +47,7 @@ def generate_roadmap(data,chance):
             Week 9–10: [Resume & Networking]  
             - [Task 1]  
             - [Task 2]
-            🔴 Important:
+            Important:
 
             Only generate the Roadmap in the above format.
 

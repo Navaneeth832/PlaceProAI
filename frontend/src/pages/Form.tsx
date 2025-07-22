@@ -78,9 +78,20 @@ const Form = () => {
 
     setLoading(true);
 
+    const processedData = {
+      ...formData,
+      age: parseInt(formData.age, 10),
+      gpa: parseFloat(formData.gpa),
+      backlogs: parseInt(formData.backlogs, 10),
+      attendance: parseFloat(formData.attendance),
+      internshipDone: formData.internshipDone === 'Yes',
+      Skills: formData.skills.split(',').map(skill => skill.trim()),
+      Clubs: formData.clubs.split(',').map(club => club.trim()),
+    };
+
     try {
-      const prediction = await predictPlacement(formData);
-      const roadmap = await generateRoadmap(formData, prediction.placement_chance);
+      const prediction = await predictPlacement(processedData);
+      const roadmap = await generateRoadmap(processedData, prediction.placement_chance);
 
       const roadmapSteps = roadmap.roadmap
         ? roadmap.roadmap.split('\n').filter(line => line.trim() !== '')
