@@ -3,6 +3,7 @@ import axios from "axios";
 const API_BASE_URL = "http://localhost:8000"; // Update if backend is hosted elsewhere
 
 export interface StudentData {
+  age: number;
   gender: string;
   branch: string;
   gpa: number;
@@ -13,27 +14,20 @@ export interface StudentData {
   Clubs: string[];
 }
 
-// Predict placement chance from backend
-export const predictPlacement = async (data: StudentData): Promise<number> => {
+// New interface for the prediction response
+export interface PredictionResult {
+  placement_chance: number;
+  roadmap: string;
+}
+
+// Predict placement chance and get roadmap from backend
+export const predictPlacement = async (data: StudentData): Promise<PredictionResult> => {
   try {
     const response = await axios.post(`${API_BASE_URL}/predict`, data);
-    return response.data.chance; // Expected: { chance: float }
+    // The backend now returns { "placement_chance": ..., "roadmap": ... }
+    return response.data;
   } catch (error) {
     console.error("Prediction error:", error);
     throw new Error("Prediction failed.");
-  }
-};
-
-// Generate roadmap using Gemini or similar service
-export const generateRoadmap = async (chance: number, data: StudentData): Promise<string> => {
-  try {
-    const response = await axios.post(`${API_BASE_URL}/roadmap`, {
-      chance,
-      data
-    });
-    return response.data.roadmap; // Expected: { roadmap: string }
-  } catch (error) {
-    console.error("Roadmap generation error:", error);
-    throw new Error("Failed to generate roadmap.");
   }
 };

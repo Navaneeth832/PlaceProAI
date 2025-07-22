@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Send, Loader2 } from 'lucide-react';
 import InputField from '../components/InputField';
-import { predictPlacement, generateRoadmap } from '../utils/api';
+import { predictPlacement, StudentData, PredictionResult } from '../utils/api'; // Updated import
 
 const Form = () => {
   const navigate = useNavigate();
@@ -25,7 +25,7 @@ const Form = () => {
   const genders = ['Male', 'Female', 'Other'];
   const yesNoOptions = ['Yes', 'No'];
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -43,7 +43,7 @@ const Form = () => {
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
-    if (!formData.age || formData.age < 18 || formData.age > 30) {
+    if (!formData.age || parseInt(formData.age) < 18 || parseInt(formData.age) > 30) {
       newErrors.age = 'Age must be between 18 and 30';
     }
     if (!formData.gender) {
@@ -52,13 +52,13 @@ const Form = () => {
     if (!formData.branch) {
       newErrors.branch = 'Branch is required';
     }
-    if (!formData.gpa || formData.gpa < 0 || formData.gpa > 10) {
+    if (!formData.gpa || parseFloat(formData.gpa) < 0 || parseFloat(formData.gpa) > 10) {
       newErrors.gpa = 'GPA must be between 0 and 10';
     }
-    if (!formData.attendance || formData.attendance < 0 || formData.attendance > 100) {
+    if (!formData.attendance || parseFloat(formData.attendance) < 0 || parseFloat(formData.attendance) > 100) {
       newErrors.attendance = 'Attendance must be between 0 and 100';
     }
-    if (!formData.backlogs || formData.backlogs < 0) {
+    if (!formData.backlogs || parseInt(formData.backlogs) < 0) {
       newErrors.backlogs = 'Backlogs cannot be negative';
     }
     if (!formData.skills.trim()) {
@@ -72,33 +72,33 @@ const Form = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     setLoading(true);
 
-    const processedData = {
-      ...formData,
+    const processedData: StudentData = {
       age: parseInt(formData.age, 10),
+      gender: formData.gender,
+      branch: formData.branch,
       gpa: parseFloat(formData.gpa),
       backlogs: parseInt(formData.backlogs, 10),
       attendance: parseFloat(formData.attendance),
       internshipDone: formData.internshipDone === 'Yes',
       Skills: formData.skills.split(',').map(skill => skill.trim()),
-      Clubs: formData.clubs.split(',').map(club => club.trim()),
+      Clubs: formData.clubs.split(',').map(club => club.trim()).filter(Boolean),
     };
 
     try {
-      const prediction = await predictPlacement(processedData);
-      const roadmap = await generateRoadmap(processedData, prediction.placement_chance);
+      const predictionResult: PredictionResult = await predictPlacement(processedData);
 
-      const roadmapSteps = roadmap.roadmap
-        ? roadmap.roadmap.split('\n').filter(line => line.trim() !== '')
+      const roadmapSteps = predictionResult.roadmap
+        ? predictionResult.roadmap.split('\n').filter(line => line.trim() !== '')
         : [];
 
       const resultData = {
-        placementChance: prediction.placement_chance,
+        placementChance: predictionResult.placement_chance,
         roadmap: roadmapSteps,
         studentData: formData,
       };

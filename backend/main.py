@@ -53,6 +53,6 @@ def predict(data: StudentData):
     roadmap = generate_roadmap(data, placement_chance)
 
     return {
-        "placement_chance": placement_chance,
-        "roadmap": roadmap
+        "placement_chance": placement_chance.tolist(),
+        "roadmap": str(roadmap)
     }

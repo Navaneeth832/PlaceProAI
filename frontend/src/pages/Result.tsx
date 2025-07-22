@@ -7,60 +7,63 @@ import jsPDF from 'jspdf';
 // @ts-ignore
 import html2canvas from 'html2canvas';
 
-interface StudentData {
-  age: number;
+// Define the interface for the original form data as stored in sessionStorage
+interface StudentFormData {
+  age: string;
+  gender: string;
   branch: string;
-  gpa: number;
-  attendance: number;
-  backlogs: number;
-  internshipDone: string;
-  skills: string[];
+  gpa: string;
+  attendance: string;
+  backlogs: string;
+  skills: string; // Stored as a comma-separated string
+  internshipDone: string; // 'Yes' or 'No' string
+  clubs: string; // Stored as a comma-separated string
 }
 
-interface PredictionResult {
+// Define the interface for the complete data structure stored in sessionStorage
+interface StoredPredictionData {
   placementChance: number;
   roadmap: string[];
-  studentData: StudentData;
+  studentData: StudentFormData;
+}
+
+// Define the interface for the component's state, matching the stored data
+interface DisplayResult {
+  placementChance: number;
+  roadmap: string[];
+  studentData: StudentFormData;
 }
 
 const Result: React.FC = () => {
   const navigate = useNavigate();
-  const [result, setResult] = useState<PredictionResult | null>(null);
+  const [result, setResult] = useState<DisplayResult | null>(null);
   const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
     const storedResultString = sessionStorage.getItem('predictionResult');
     if (!storedResultString) {
+      // If no data is found, redirect to the form
       navigate('/form');
       return;
     }
-  
+
     try {
-      const stored = JSON.parse(storedResultString);
-  
-      // Convert roadmap string into array
-      const roadmapRaw = stored.roadmap?.roadmap || stored.roadmap || '';
-      console.log("roadmapRaw:", roadmapRaw);
-      const skills = Array.isArray(stored.studentData.skills)
-        ? stored.studentData.skills
-        : stored.studentData.skills?.split(',').map((s: string) => s.trim()) || [];
-      console.log("roadmapArray:", roadmapArray);
+      // Parse the stored string into the StoredPredictionData object
+      const stored: StoredPredictionData = JSON.parse(storedResultString);
+
+      // Set the component's state with the extracted data
       setResult({
-        placementChance: stored.placementChance || stored.placement_chance,
-        roadmap: roadmapArray,
-        studentData: {
-          ...stored.studentData,
-          skills,
-        },
+        placementChance: stored.placementChance,
+        roadmap: stored.roadmap,
+        studentData: stored.studentData,
       });
     } catch (err) {
-      console.error('Failed to parse predictionResult:', err);
+      console.error('Failed to parse predictionResult from sessionStorage:', err);
+      // If parsing fails, redirect to the form
       navigate('/form');
     }
   }, [navigate]);
-  
-  
-  
+
 
   const generatePDF = async () => {
     setGenerating(true);
@@ -84,8 +87,9 @@ const Result: React.FC = () => {
   };
 
   const shareResult = async () => {
-    if (!result) return;
+    if (!result) return; // Ensure result is not null
 
+    // Access placementChance directly from the result state
     const message = `I got a ${result.placementChance.toFixed(1)}% placement probability with PlacementAI!`;
 
     if (navigator.share) {
@@ -104,6 +108,7 @@ const Result: React.FC = () => {
     }
   };
 
+  // Display a loading state if result is null (data not yet loaded or invalid)
   if (!result) {
     return (
       <div className="flex items-center justify-center min-h-64">
@@ -112,6 +117,7 @@ const Result: React.FC = () => {
     );
   }
 
+  // Destructure properties from the correctly typed result object
   const { placementChance, roadmap, studentData } = result;
 
   return (
@@ -166,11 +172,18 @@ const Result: React.FC = () => {
           <div><span className="text-gray-500 dark:text-gray-400">GPA:</span> <span className="ml-2 font-medium text-gray-900 dark:text-white">{studentData.gpa}</span></div>
           <div><span className="text-gray-500 dark:text-gray-400">Attendance:</span> <span className="ml-2 font-medium text-gray-900 dark:text-white">{studentData.attendance}%</span></div>
           <div><span className="text-gray-500 dark:text-gray-400">Backlogs:</span> <span className="ml-2 font-medium text-gray-900 dark:text-white">{studentData.backlogs}</span></div>
+          {/* studentData.internshipDone is already a string 'Yes' or 'No' */}
           <div><span className="text-gray-500 dark:text-gray-400">Internship:</span> <span className="ml-2 font-medium text-gray-900 dark:text-white">{studentData.internshipDone}</span></div>
         </div>
         <div className="mt-4">
           <span className="text-gray-500 dark:text-gray-400">Skills:</span>
-          <span className="ml-2 font-medium text-gray-900 dark:text-white">{studentData.skills.join(', ')}</span>
+          {/* studentData.skills is a string, not an array, so remove .join() */}
+          <span className="ml-2 font-medium text-gray-900 dark:text-white">{studentData.skills}</span>
+        </div>
+        <div className="mt-4">
+          <span className="text-gray-500 dark:text-gray-400">Clubs:</span>
+          {/* studentData.clubs is a string, use it directly */}
+          <span className="ml-2 font-medium text-gray-900 dark:text-white">{studentData.clubs || 'N/A'}</span>
         </div>
       </div>
 
@@ -179,8 +192,6 @@ const Result: React.FC = () => {
         <AIOutputCard
           prediction={placementChance}
           roadmap={roadmap}
-          skills={studentData.skills}
-          recommendations={roadmap}
         />
       </div>
 
