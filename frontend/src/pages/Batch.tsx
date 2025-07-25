@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Send } from 'lucide-react';
 
 const interviewQuestions = [
   "Explain the React component lifecycle methods and their corresponding hooks in a functional component. When would you use each?",
@@ -18,7 +18,7 @@ const Interview = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState(Array(interviewQuestions.length).fill(''));
 
-  const handleAnswerChange = (e) => {
+  const handleAnswerChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const updatedAnswers = [...answers];
     updatedAnswers[currentQuestion] = e.target.value;
     setAnswers(updatedAnswers);
@@ -34,6 +34,13 @@ const Interview = () => {
     if (currentQuestion > 0) {
       setCurrentQuestion(currentQuestion - 1);
     }
+  };
+
+  const handleSubmit = () => {
+    // You can add your submission logic here.
+    // For example, sending the answers to an API.
+    console.log('Submitting answers:', answers);
+    alert('Interview submitted successfully!');
   };
 
   return (
@@ -67,13 +74,21 @@ const Interview = () => {
           >
             <ArrowLeft className="mr-2 h-4 w-4" /> Previous
           </button>
-          <button
-            onClick={goNext}
-            disabled={currentQuestion === interviewQuestions.length - 1}
-            className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition disabled:opacity-50"
-          >
-            Next <ArrowRight className="ml-2 h-4 w-4" />
-          </button>
+          {currentQuestion === interviewQuestions.length - 1 ? (
+            <button
+              onClick={handleSubmit}
+              className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+            >
+              <Send className="mr-2 h-4 w-4" /> Submit
+            </button>
+          ) : (
+            <button
+              onClick={goNext}
+              className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
+            >
+              Next <ArrowRight className="ml-2 h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
     </div>
